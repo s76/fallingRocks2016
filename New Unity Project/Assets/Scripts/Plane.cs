@@ -5,13 +5,23 @@ using System.Collections.Generic;
 
 namespace Core.Model
 {
+    public class SpaceSlot
+    {
+        public Vector3 geoPosition;
+        public IGeoEntity current;
+    }
+
     public class Plane : MonoBehaviour
     {
-        public float rockFallTime;
-        public float rockFallHeight;
-
         public int SizeX { get; private set; }
         public int SizeZ { get; private set; }
+
+        internal void SpawnCharacter(string characterCodeName, int level, int x, int z)
+        {
+            var c = CharacterFactory.Instance.Create(characterCodeName);
+            c.SetPlane(this);
+            c.SetGeoIndex(level, x, z);
+        }
 
         public Vector3 Position
         {
@@ -19,13 +29,23 @@ namespace Core.Model
             set { transform.position = value; }
         }
 
+        public float GroundHeight { get { return transform.position.y + RockSize; }  }
+
+        public float RockSize { get; private set; }
+        public string CodeName { get; private set; }
+        public int RockFallHeight { get; private set; }
+        
+        const int maxLevel = 1;
+
         internal void Initialize(PlaneInitData data)
         {
-            this.SizeX = data.sizeX;
-            this.SizeZ = data.sizeZ;
-            this.RockSize = data.rockSize;
+            CodeName = data.codeName;
 
-            staticRocks = new Rock[data.sizeX, data.sizeZ];
+            SizeX = data.sizeX;
+            SizeZ = data.sizeZ;
+            RockSize = data.rockSize;
+
+            RockFallHeight = data.rockFallHeight;
 
             var currentRockIndex = 0;
             var currentCount = 0;
@@ -34,61 +54,40 @@ namespace Core.Model
                 for (int z = 0; z < data.sizeZ; z++)
                 {
                     var r = RockFactory.Instance.Create(data.rocks[currentRockIndex].rockCodeName);
-                    currentCount++;
-                    if (currentCount >= data.rocks[currentRockIndex].amount && currentRockIndex + 1 < data.rocks.Count)
+                    if(data.rocks[currentRockIndex].amount != -1)
                     {
-                        currentCount = 0;
-                        currentRockIndex++;
+                        currentCount++;
+                        if (currentCount >= data.rocks[currentRockIndex].amount && currentRockIndex + 1 < data.rocks.Count)
+                        {
+                            currentCount = 0;
+                            currentRockIndex++;
+                        }
                     }
-
-                    staticRocks[x, z] = r;
-                    r.SetPlane(this, x, z);
-                    r.LocalPosition = StaticRockLocalPos(x, z);
-
+                    r.SetPlane(this);
+                    r.SetGeoIndex(0, x, z);
                 }
             }
-
-            dynamicRocks = new List<Rock>();
         }
-
-        public float RockSize { get; private set; }
-
-        private Rock[,] staticRocks;
-        private List<Rock> dynamicRocks;
-
-        Vector3 StaticRockLocalPos(int x, int z)
+    
+        public Vector3 CalculateLocalGeoPos(int h, int x, int z)
         {
-            return new Vector3((x - SizeX / 2f) * RockSize, 0, (z - SizeZ / 2f) * RockSize);
+            return new Vector3((x - SizeX / 2f) * RockSize, h*RockSize, (z - SizeZ / 2f) * RockSize);
         }
-
+        public Vector3 CalculateLocalCharacterPos(int h, int x, int z)
+        {
+            return new Vector3((x - SizeX / 2f) * RockSize, (h - 0.5f)* RockSize , (z - SizeZ / 2f) * RockSize);
+        }
         public void RockFall(string rockCodeName, int x, int z )
         {
             var r = RockFactory.Instance.Create(rockCodeName);
-            r.SetPlane(this, x, z);
-            r.isFalling = true;
+            r.SetPlane(this);
+            r.SetGeoIndex(0, x, z);
 
-            dynamicRocks.Add(r);
-
-            var des = StaticRockLocalPos(x, z);
-            des.y += RockSize;
-            var start = new Vector3(des.x, des.y + rockFallHeight, des.z);
+            var des = CalculateLocalGeoPos(1, x, z);
+            var start = CalculateLocalGeoPos(RockFallHeight, x, z); 
             
             r.LocalPosition = start;
-
-            StartCoroutine(RockFall2(r, start, des, r.FallTime));
-        }
-
-        private IEnumerator RockFall2(Rock r, Vector3 start, Vector3 des, float fallTime)
-        {
-            yield return null;
-            var timer = 0f;
-            while(timer < fallTime )
-            {
-                timer += Time.deltaTime;
-                r.LocalPosition = Vector3.LerpUnclamped(start, des, r.fallSpeedCurve.Evaluate(timer/fallTime));
-                yield return null;
-            }
-            r.isFalling = false;
+            r.Fall(start, des);
         }
     }
 }

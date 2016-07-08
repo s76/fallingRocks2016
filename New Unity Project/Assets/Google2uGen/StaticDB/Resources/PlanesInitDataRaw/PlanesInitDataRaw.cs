@@ -15,19 +15,20 @@ namespace Google2u
 	public class PlanesInitDataRawRow : IGoogle2uRow
 	{
 		public string _CodeName;
-		public Vector3 _Size;
+		public Vector2 _PlaneSize;
 		public System.Collections.Generic.List<string> _Rocks = new System.Collections.Generic.List<string>();
 		public bool _RandomDistribution;
-		public System.Collections.Generic.List<string> _TestField = new System.Collections.Generic.List<string>();
-		public PlanesInitDataRawRow(string __ID, string __CodeName, string __Size, string __Rocks, string __RandomDistribution, string __TestField) 
+		public float _RockSize;
+		public int _RockFallHeight;
+		public PlanesInitDataRawRow(string __ID, string __CodeName, string __PlaneSize, string __Rocks, string __RandomDistribution, string __RockSize, string __RockFallHeight) 
 		{
 			_CodeName = __CodeName.Trim();
 			{
-				string [] splitpath = __Size.Split(",".ToCharArray(),System.StringSplitOptions.RemoveEmptyEntries);
-				if(splitpath.Length != 3)
-					Debug.LogError("Incorrect number of parameters for Vector3 in " + __Size );
+				string [] splitpath = __PlaneSize.Split(",".ToCharArray(),System.StringSplitOptions.RemoveEmptyEntries);
+				if(splitpath.Length != 2)
+					Debug.LogError("Incorrect number of parameters for Vector2 in " + __PlaneSize );
 				float []results = new float[splitpath.Length];
-				for(int i = 0; i < 3; i++)
+				for(int i = 0; i < 2; i++)
 				{
 					float res;
 					if(float.TryParse(splitpath[i], NumberStyles.Any, CultureInfo.InvariantCulture, out res))
@@ -36,12 +37,11 @@ namespace Google2u
 					}
 					else 
 					{
-						Debug.LogError("Error parsing " + __Size + " Component: " + splitpath[i] + " parameter " + i + " of variable _Size");
+						Debug.LogError("Error parsing " + __PlaneSize + " Component: " + splitpath[i] + " parameter " + i + " of variable _PlaneSize");
 					}
 				}
-				_Size.x = results[0];
-				_Size.y = results[1];
-				_Size.z = results[2];
+				_PlaneSize.x = results[0];
+				_PlaneSize.y = results[1];
 			}
 			{
 				string []result = __Rocks.Split("|".ToCharArray(),System.StringSplitOptions.RemoveEmptyEntries);
@@ -58,15 +58,22 @@ namespace Google2u
 					Debug.LogError("Failed To Convert _RandomDistribution string: "+ __RandomDistribution +" to bool");
 			}
 			{
-				string []result = __TestField.Split("|".ToCharArray(),System.StringSplitOptions.RemoveEmptyEntries);
-				for(int i = 0; i < result.Length; i++)
-				{
-					_TestField.Add( result[i].Trim() );
-				}
+			float res;
+				if(float.TryParse(__RockSize, NumberStyles.Any, CultureInfo.InvariantCulture, out res))
+					_RockSize = res;
+				else
+					Debug.LogError("Failed To Convert _RockSize string: "+ __RockSize +" to float");
+			}
+			{
+			int res;
+				if(int.TryParse(__RockFallHeight, NumberStyles.Any, CultureInfo.InvariantCulture, out res))
+					_RockFallHeight = res;
+				else
+					Debug.LogError("Failed To Convert _RockFallHeight string: "+ __RockFallHeight +" to int");
 			}
 		}
 
-		public int Length { get { return 5; } }
+		public int Length { get { return 6; } }
 
 		public string this[int i]
 		{
@@ -85,7 +92,7 @@ namespace Google2u
 					ret = _CodeName.ToString();
 					break;
 				case 1:
-					ret = _Size.ToString();
+					ret = _PlaneSize.ToString();
 					break;
 				case 2:
 					ret = _Rocks.ToString();
@@ -94,7 +101,10 @@ namespace Google2u
 					ret = _RandomDistribution.ToString();
 					break;
 				case 4:
-					ret = _TestField.ToString();
+					ret = _RockSize.ToString();
+					break;
+				case 5:
+					ret = _RockFallHeight.ToString();
 					break;
 			}
 
@@ -109,8 +119,8 @@ namespace Google2u
 				case "CodeName":
 					ret = _CodeName.ToString();
 					break;
-				case "Size":
-					ret = _Size.ToString();
+				case "PlaneSize":
+					ret = _PlaneSize.ToString();
 					break;
 				case "Rocks":
 					ret = _Rocks.ToString();
@@ -118,8 +128,11 @@ namespace Google2u
 				case "RandomDistribution":
 					ret = _RandomDistribution.ToString();
 					break;
-				case "TestField":
-					ret = _TestField.ToString();
+				case "RockSize":
+					ret = _RockSize.ToString();
+					break;
+				case "RockFallHeight":
+					ret = _RockFallHeight.ToString();
 					break;
 			}
 
@@ -129,10 +142,11 @@ namespace Google2u
 		{
 			string ret = System.String.Empty;
 			ret += "{" + "CodeName" + " : " + _CodeName.ToString() + "} ";
-			ret += "{" + "Size" + " : " + _Size.ToString() + "} ";
+			ret += "{" + "PlaneSize" + " : " + _PlaneSize.ToString() + "} ";
 			ret += "{" + "Rocks" + " : " + _Rocks.ToString() + "} ";
 			ret += "{" + "RandomDistribution" + " : " + _RandomDistribution.ToString() + "} ";
-			ret += "{" + "TestField" + " : " + _TestField.ToString() + "} ";
+			ret += "{" + "RockSize" + " : " + _RockSize.ToString() + "} ";
+			ret += "{" + "RockFallHeight" + " : " + _RockFallHeight.ToString() + "} ";
 			return ret;
 		}
 	}
@@ -159,8 +173,8 @@ namespace Google2u
 
 		private PlanesInitDataRaw()
 		{
-			Rows.Add( new PlanesInitDataRawRow("Plane01", "CN_Plane01", "3,3,20", "CN_CrushRock*9", "FALSE", "test01|test02"));
-			Rows.Add( new PlanesInitDataRawRow("Plane02", "CN_Plane02", "4,4,20", "CN_CrushRock*10|CN_FlameRock*6", "FALSE", "test04|test05"));
+			Rows.Add( new PlanesInitDataRawRow("Plane01", "CN_Plane01", "3,3", "CN_CrushRock", "FALSE", "2", "5"));
+			Rows.Add( new PlanesInitDataRawRow("Plane02", "CN_Plane02", "4,4", "CN_CrushRock*10|CN_FlameRock*6", "FALSE", "2", "5"));
 		}
 		public IGoogle2uRow GetGenRow(string in_RowString)
 		{

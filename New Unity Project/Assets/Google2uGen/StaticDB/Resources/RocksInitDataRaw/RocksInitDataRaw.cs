@@ -15,11 +15,15 @@ namespace Google2u
 	public class RocksInitDataRawRow : IGoogle2uRow
 	{
 		public string _CodeName;
+		public string _SkinName;
 		public System.Collections.Generic.List<string> _SkillNames = new System.Collections.Generic.List<string>();
 		public float _FallTime;
-		public RocksInitDataRawRow(string __ID, string __CodeName, string __SkillNames, string __FallTime) 
+		public float _AppearTime;
+		public float _DisappearTime;
+		public RocksInitDataRawRow(string __ID, string __CodeName, string __SkinName, string __SkillNames, string __FallTime, string __AppearTime, string __DisappearTime) 
 		{
 			_CodeName = __CodeName.Trim();
+			_SkinName = __SkinName.Trim();
 			{
 				string []result = __SkillNames.Split("|".ToCharArray(),System.StringSplitOptions.RemoveEmptyEntries);
 				for(int i = 0; i < result.Length; i++)
@@ -34,9 +38,23 @@ namespace Google2u
 				else
 					Debug.LogError("Failed To Convert _FallTime string: "+ __FallTime +" to float");
 			}
+			{
+			float res;
+				if(float.TryParse(__AppearTime, NumberStyles.Any, CultureInfo.InvariantCulture, out res))
+					_AppearTime = res;
+				else
+					Debug.LogError("Failed To Convert _AppearTime string: "+ __AppearTime +" to float");
+			}
+			{
+			float res;
+				if(float.TryParse(__DisappearTime, NumberStyles.Any, CultureInfo.InvariantCulture, out res))
+					_DisappearTime = res;
+				else
+					Debug.LogError("Failed To Convert _DisappearTime string: "+ __DisappearTime +" to float");
+			}
 		}
 
-		public int Length { get { return 3; } }
+		public int Length { get { return 6; } }
 
 		public string this[int i]
 		{
@@ -55,10 +73,19 @@ namespace Google2u
 					ret = _CodeName.ToString();
 					break;
 				case 1:
-					ret = _SkillNames.ToString();
+					ret = _SkinName.ToString();
 					break;
 				case 2:
+					ret = _SkillNames.ToString();
+					break;
+				case 3:
 					ret = _FallTime.ToString();
+					break;
+				case 4:
+					ret = _AppearTime.ToString();
+					break;
+				case 5:
+					ret = _DisappearTime.ToString();
 					break;
 			}
 
@@ -73,11 +100,20 @@ namespace Google2u
 				case "CodeName":
 					ret = _CodeName.ToString();
 					break;
+				case "SkinName":
+					ret = _SkinName.ToString();
+					break;
 				case "SkillNames":
 					ret = _SkillNames.ToString();
 					break;
 				case "FallTime":
 					ret = _FallTime.ToString();
+					break;
+				case "AppearTime":
+					ret = _AppearTime.ToString();
+					break;
+				case "DisappearTime":
+					ret = _DisappearTime.ToString();
 					break;
 			}
 
@@ -87,8 +123,11 @@ namespace Google2u
 		{
 			string ret = System.String.Empty;
 			ret += "{" + "CodeName" + " : " + _CodeName.ToString() + "} ";
+			ret += "{" + "SkinName" + " : " + _SkinName.ToString() + "} ";
 			ret += "{" + "SkillNames" + " : " + _SkillNames.ToString() + "} ";
 			ret += "{" + "FallTime" + " : " + _FallTime.ToString() + "} ";
+			ret += "{" + "AppearTime" + " : " + _AppearTime.ToString() + "} ";
+			ret += "{" + "DisappearTime" + " : " + _DisappearTime.ToString() + "} ";
 			return ret;
 		}
 	}
@@ -115,9 +154,9 @@ namespace Google2u
 
 		private RocksInitDataRaw()
 		{
-			Rows.Add( new RocksInitDataRawRow("CrushRock", "CN_CrushRock", "", "2"));
-			Rows.Add( new RocksInitDataRawRow("FlameRock", "CN_FlameRock", "", "0.5"));
-			Rows.Add( new RocksInitDataRawRow("ThunderRock", "CN_ThunderRock", "", "2"));
+			Rows.Add( new RocksInitDataRawRow("CrushRock", "CN_CrushRock", "CrushRock_Skin", "", "2", "1", "1"));
+			Rows.Add( new RocksInitDataRawRow("FlameRock", "CN_FlameRock", "FlameRock_Skin", "CN_MeteorCrash", "1", "1", "10"));
+			Rows.Add( new RocksInitDataRawRow("ThunderRock", "CN_ThunderRock", "ThunderRock_Skin", "", "2", "1", "1"));
 		}
 		public IGoogle2uRow GetGenRow(string in_RowString)
 		{
